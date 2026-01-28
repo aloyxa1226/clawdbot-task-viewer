@@ -149,6 +149,58 @@ router.get("/search/query", async (req, res) => {
   }
 });
 
+// GET /api/v1/tasks - Fetch pending user-created tasks
+router.get("/tasks", async (req, res) => {
+  try {
+    const { status, source } = req.query;
+
+    // Default filters for pending user tasks
+    const filters = ["tasks.status = $1"];
+    const params: unknown[] = [status || "pending"];
+    let paramCount = 2;
+
+    // Filter by source in metadata if provided
+    if (source) {
+      filters.push(`tasks.metadata->>'source' = $${paramCount}`);
+      params.push(source);
+      paramCount++;
+    }
+
+    // Fetch tasks matching the filters
+    const tasksResult = await query<Task>(
+      `SELECT
+        id,
+        session_id,
+        task_number,
+        subject,
+        description,
+        active_form,
+        status,
+        priority,
+        blocks,
+        blocked_by,
+        metadata,
+        created_at,
+        updated_at,
+        completed_at
+      FROM tasks
+      WHERE ${filters.join(" AND ")}
+      ORDER BY created_at DESC`,
+      params
+    );
+
+    return res.json({
+      tasks: tasksResult.rows,
+      count: tasksResult.rows.length,
+    });
+  } catch (error) {
+    console.error("Error fetching pending tasks:", error);
+    return res.status(500).json({
+      error: "Internal server error",
+    });
+  }
+});
+
 // GET /api/v1/sessions/:sessionKey/tasks - Fetch all tasks for a session
 router.get("/:sessionKey/tasks", async (req, res) => {
   try {

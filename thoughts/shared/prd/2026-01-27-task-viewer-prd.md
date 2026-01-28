@@ -27,8 +27,14 @@
 ### Non-Goals (Out of Scope)
 - User authentication or role-based access control.
 - Fine-grained control over Ngrok configuration (beyond basic tunnel creation).
-- Task editing or creation within the task viewer application.
-- Support for task deletion for tasks that are not in a `pending` state.
+- Task creation within the task viewer application (ClawdBot pushes tasks).
+- Task editing/deletion for tasks NOT in `pending` (backlog) state.
+
+### In Scope (Clarification)
+- Task editing IS allowed for `pending` (backlog) tasks, including:
+  - Updating task subject, description, priority
+  - Adding/removing file attachments
+  - Deleting the task entirely
 
 ---
 
@@ -86,6 +92,16 @@
   - [ ] On startup, the application creates an Ngrok tunnel.
   - [ ] The public URL is displayed in the console output.
   - [ ] The application remains accessible via the Ngrok URL.
+  - [ ] Typecheck passes
+
+#### [US-008]: Edit Pending Tasks
+- **As a** user **I want** to edit tasks that are in `pending` (backlog) state **so that** I can refine task details before work begins.
+- **Acceptance Criteria:**
+  - [ ] Pending tasks show an edit button in the UI.
+  - [ ] Users can update subject, description, and priority.
+  - [ ] Users can add or remove file attachments.
+  - [ ] Users can delete the pending task entirely.
+  - [ ] Edit/delete buttons are hidden for non-pending tasks.
   - [ ] Typecheck passes
 
 ### Functional Requirements

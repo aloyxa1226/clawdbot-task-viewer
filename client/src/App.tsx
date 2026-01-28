@@ -3,10 +3,8 @@ import { DragDropContext, DropResult } from "@hello-pangea/dnd";
 import { Task, Session } from "./types/task";
 import { TaskDetailDialog } from "./components/TaskDetailDialog";
 import { TaskCreateDialog } from "./components/TaskCreateDialog";
-import { SessionsSidebar } from "./components/SessionsSidebar";
-import { TaskSearch } from "./components/TaskSearch";
 import { KanbanColumn } from "./components/KanbanColumn";
-import { Plus, RefreshCw } from "lucide-react";
+import { Header } from "./components/Header";
 
 interface HealthStatus {
   status: string;
@@ -171,122 +169,64 @@ function App() {
   const completedTasks = tasks.filter(t => t.status === 'completed');
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-foreground">
-            ClawdBot Task Viewer
-          </h1>
-        </div>
-      </header>
+    <div className="flex flex-col h-screen bg-background overflow-hidden">
+      <Header
+        onTaskSelect={handleTaskClick}
+        onRefresh={fetchAllTasks}
+        onCreateTask={() => setCreateDialogOpen(true)}
+        health={health}
+        isLoading={tasksLoading}
+      />
 
-      <div className="flex flex-1 overflow-hidden">
-        <SessionsSidebar />
-
-        <main className="flex-1 overflow-y-auto px-4 py-8 max-w-6xl">
-        <div className="grid gap-6">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <h2 className="text-xl font-semibold">Tasks</h2>
-              {tasksLoading && (
-                <RefreshCw className="w-4 h-4 animate-spin text-muted-foreground" />
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => fetchAllTasks()}
-                className="flex items-center gap-2 px-3 py-2 border rounded-md hover:bg-muted text-sm"
-                title="Refresh tasks"
-              >
-                <RefreshCw className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setCreateDialogOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/80 font-medium text-sm"
-              >
-                <Plus className="w-4 h-4" />
-                New Task
-              </button>
-            </div>
+      <main className="flex-1 overflow-hidden p-4">
+        {error && (
+          <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+            Error: {error}
           </div>
-          <TaskSearch onTaskSelect={handleTaskClick} />
+        )}
 
-          <section className="rounded-lg border bg-card p-6">
-            <h2 className="mb-4 text-xl font-semibold">System Status</h2>
-            {error ? (
-              <p className="text-destructive">Error: {error}</p>
-            ) : health ? (
-              <div className="space-y-2">
-                <p>
-                  Status:{" "}
-                  <span
-                    className={
-                      health.status === "healthy"
-                        ? "text-green-600"
-                        : "text-yellow-600"
-                    }
-                  >
-                    {health.status}
-                  </span>
-                </p>
-                <p>Database: {health.services.database}</p>
-                <p>Redis: {health.services.redis}</p>
-                <p className="text-sm text-muted-foreground">
-                  Last checked: {health.timestamp}
-                </p>
-              </div>
-            ) : (
-              <p className="text-muted-foreground">Loading...</p>
-            )}
-          </section>
-
-          <section className="rounded-lg border bg-card p-6">
-            <h2 className="mb-4 text-xl font-semibold">Kanban Board</h2>
-            <DragDropContext onDragEnd={handleDragEnd}>
-              <div className="grid grid-cols-3 gap-4 h-96">
-                <KanbanColumn
-                  status="pending"
-                  tasks={pendingTasks}
-                  totalTasks={tasks.length}
-                  onTaskClick={handleTaskClick}
-                  onTaskDelete={handleQuickDelete}
-                />
-                <KanbanColumn
-                  status="in_progress"
-                  tasks={inProgressTasks}
-                  totalTasks={tasks.length}
-                  onTaskClick={handleTaskClick}
-                  onTaskDelete={handleQuickDelete}
-                />
-                <KanbanColumn
-                  status="completed"
-                  tasks={completedTasks}
-                  totalTasks={tasks.length}
-                  onTaskClick={handleTaskClick}
-                  onTaskDelete={handleQuickDelete}
-                />
-              </div>
-            </DragDropContext>
-          </section>
-
-          <TaskDetailDialog
-            task={selectedTask}
-            allTasks={tasks}
-            open={dialogOpen}
-            onOpenChange={setDialogOpen}
-            onTaskUpdated={handleTaskUpdated}
-            onTaskDeleted={handleTaskDeleted}
-          />
-
-          <TaskCreateDialog
-            open={createDialogOpen}
-            onOpenChange={setCreateDialogOpen}
-            onTaskCreated={handleTaskCreated}
-            allTasks={tasks}
-          />
-        </div>
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <div className="grid grid-cols-3 gap-4 h-full">
+            <KanbanColumn
+              status="pending"
+              tasks={pendingTasks}
+              totalTasks={tasks.length}
+              onTaskClick={handleTaskClick}
+              onTaskDelete={handleQuickDelete}
+            />
+            <KanbanColumn
+              status="in_progress"
+              tasks={inProgressTasks}
+              totalTasks={tasks.length}
+              onTaskClick={handleTaskClick}
+              onTaskDelete={handleQuickDelete}
+            />
+            <KanbanColumn
+              status="completed"
+              tasks={completedTasks}
+              totalTasks={tasks.length}
+              onTaskClick={handleTaskClick}
+              onTaskDelete={handleQuickDelete}
+            />
+          </div>
+        </DragDropContext>
       </main>
-      </div>
+
+      <TaskDetailDialog
+        task={selectedTask}
+        allTasks={tasks}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onTaskUpdated={handleTaskUpdated}
+        onTaskDeleted={handleTaskDeleted}
+      />
+
+      <TaskCreateDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onTaskCreated={handleTaskCreated}
+        allTasks={tasks}
+      />
     </div>
   );
 }

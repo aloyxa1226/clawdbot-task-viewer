@@ -11,17 +11,17 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
   const blocksOthers = task.blocks.length > 0;
 
   const priorityColor = {
-    0: 'border-gray-300',
+    0: 'border-border',
     1: 'border-blue-400',
     2: 'border-yellow-400',
     3: 'border-orange-400',
     4: 'border-red-400',
-  }[task.priority] || 'border-gray-300';
+  }[task.priority] || 'border-border';
 
   return (
     <div
       onClick={onClick}
-      className={`rounded-lg border-2 ${priorityColor} bg-white p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer`}
+      className={`rounded-lg border-2 ${priorityColor} bg-card p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer`}
     >
       <div className="flex items-start justify-between mb-2">
         <h4 className="font-medium text-sm line-clamp-2 flex-1">
@@ -42,16 +42,16 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
       </div>
 
       {task.description && (
-        <p className="text-xs text-gray-600 line-clamp-2 mb-2">
+        <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
           {task.description}
         </p>
       )}
 
-      <div className="flex items-center justify-between text-xs text-gray-500">
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span className={`px-2 py-0.5 rounded ${
-          task.status === 'completed' ? 'bg-green-100 text-green-700' :
-          task.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
-          'bg-gray-100 text-gray-700'
+          task.status === 'completed' ? 'bg-green-900 text-green-200' :
+          task.status === 'in_progress' ? 'bg-blue-900 text-blue-200' :
+          'bg-muted text-foreground'
         }`}>
           {task.status.replace('_', ' ')}
         </span>

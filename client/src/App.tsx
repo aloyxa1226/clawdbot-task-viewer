@@ -145,7 +145,7 @@ function App() {
               </button>
               <button
                 onClick={() => setCreateDialogOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium text-sm"
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/80 font-medium text-sm"
               >
                 <Plus className="w-4 h-4" />
                 New Task

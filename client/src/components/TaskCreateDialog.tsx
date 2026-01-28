@@ -136,29 +136,29 @@ export function TaskCreateDialog({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-        <Dialog.Content className="fixed left-[50%] top-[50%] z-50 max-h-[85vh] w-[90vw] max-w-[600px] translate-x-[-50%] translate-y-[-50%] rounded-lg border bg-white p-6 shadow-lg overflow-y-auto">
+        <Dialog.Content className="fixed left-[50%] top-[50%] z-50 max-h-[85vh] w-[90vw] max-w-[600px] translate-x-[-50%] translate-y-[-50%] rounded-lg border bg-card p-6 shadow-lg overflow-y-auto">
           <Dialog.Title className="text-xl font-semibold mb-4">
             Create New Task
           </Dialog.Title>
 
-          <Dialog.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2">
+          <Dialog.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-card transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
             <X className="h-4 w-4" />
             <span className="sr-only">Close</span>
           </Dialog.Close>
 
           <div className="space-y-4">
             {error && (
-              <div className="rounded-md bg-red-50 border border-red-200 p-3">
-                <p className="text-sm text-red-700">{error}</p>
+              <div className="rounded-md bg-red-950 border border-red-900 p-3">
+                <p className="text-sm text-red-200">{error}</p>
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Session <span className="text-red-500">*</span>
               </label>
               {sessionsLoading ? (
-                <div className="px-3 py-2 border border-gray-300 rounded-md text-gray-500 text-sm">
+                <div className="px-3 py-2 border border-input rounded-md text-muted-foreground text-sm">
                   Loading sessions...
                 </div>
               ) : (
@@ -169,7 +169,7 @@ export function TaskCreateDialog({
                     setSelectedSession(session || null);
                   }}
                   disabled={isLoading}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                  className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
                 >
                   <option value="">Select a session...</option>
                   {sessions.map((session) => (
@@ -182,7 +182,7 @@ export function TaskCreateDialog({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Subject <span className="text-red-500">*</span>
               </label>
               <input
@@ -191,12 +191,12 @@ export function TaskCreateDialog({
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder="Enter task subject"
                 disabled={isLoading}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Description
               </label>
               <textarea
@@ -205,19 +205,19 @@ export function TaskCreateDialog({
                 placeholder="Enter task description (optional)"
                 disabled={isLoading}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Priority
               </label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(parseInt(e.target.value, 10))}
                 disabled={isLoading}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
               >
                 <option value={0}>None (0)</option>
                 <option value={1}>Low (1)</option>
@@ -228,12 +228,12 @@ export function TaskCreateDialog({
             </div>
 
             <div className="border-t pt-4">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">
+              <h3 className="text-sm font-medium text-foreground mb-3">
                 File Attachments
               </h3>
 
               <div className="space-y-2">
-                <label className="flex items-center gap-2 px-3 py-2 border border-dashed border-gray-300 rounded cursor-pointer hover:bg-gray-50 disabled:opacity-50">
+                <label className="flex items-center gap-2 px-3 py-2 border border-dashed border-input rounded cursor-pointer hover:bg-muted disabled:opacity-50">
                   <Plus className="w-4 h-4" />
                   <span className="text-sm">Attach file</span>
                   <input
@@ -255,14 +255,14 @@ export function TaskCreateDialog({
               <button
                 onClick={handleCreate}
                 disabled={isLoading}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 font-medium text-sm"
+                className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/80 disabled:opacity-50 font-medium text-sm"
               >
                 {isLoading ? 'Creating...' : 'Create Task'}
               </button>
               <button
                 onClick={() => onOpenChange(false)}
                 disabled={isLoading}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 font-medium text-sm"
+                className="flex-1 px-4 py-2 border border-input rounded-md hover:bg-muted disabled:opacity-50 font-medium text-sm"
               >
                 Cancel
               </button>

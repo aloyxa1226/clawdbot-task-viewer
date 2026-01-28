@@ -77,7 +77,7 @@ export function TaskDetailDialog({ task, allTasks, open, onOpenChange, onTaskUpd
           {task.status === 'pending' && (
             <button
               onClick={() => setEditDialogOpen(true)}
-              className="flex items-center gap-2 px-3 py-1 bg-blue-900 text-blue-200 rounded hover:bg-blue-800 text-sm font-medium"
+              className="flex items-center gap-2 px-3 py-1 bg-primary text-primary-foreground rounded hover:bg-primary/80 text-sm font-medium"
               title="Edit pending task"
             >
               <Edit2 className="w-4 h-4" />
@@ -99,9 +99,9 @@ export function TaskDetailDialog({ task, allTasks, open, onOpenChange, onTaskUpd
 
             <div>
               <h3 className="font-medium text-sm text-muted-foreground mb-1">Status</h3>
-              <span className={`inline-block px-2 py-1 rounded text-sm ${
-                task.status === 'completed' ? 'bg-green-900 text-green-200' :
-                task.status === 'in_progress' ? 'bg-blue-900 text-blue-200' :
+              <span className={`inline-block px-2 py-1 rounded text-sm font-medium ${
+                task.status === 'completed' ? 'bg-green-900/30 text-green-400 border border-green-700' :
+                task.status === 'in_progress' ? 'bg-blue-900/30 text-blue-400 border border-blue-700' :
                 'bg-muted text-foreground'
               }`}>
                 {task.status.replace('_', ' ')}
@@ -180,7 +180,7 @@ export function TaskDetailDialog({ task, allTasks, open, onOpenChange, onTaskUpd
                     <a
                       key={file.id}
                       href={`/api/v1/tasks/${task.id}/files/${file.id}`}
-                      className="flex items-center gap-2 p-2 rounded border border-border hover:bg-muted text-sm text-blue-400 hover:text-blue-300"
+                      className="flex items-center gap-2 p-2 rounded border border-border hover:bg-muted text-sm text-primary hover:text-primary/80"
                       download
                     >
                       <FileText className="w-4 h-4 flex-shrink-0" />

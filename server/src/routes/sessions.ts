@@ -220,9 +220,9 @@ router.post("/:sessionKey/tasks", async (req, res) => {
     } = req.body;
 
     // Validate required fields
-    if (!task_number || !subject) {
+    if (!subject) {
       return res.status(400).json({
-        error: "Missing required fields: task_number and subject are required",
+        error: "Missing required field: subject is required",
       });
     }
 
@@ -247,6 +247,23 @@ router.post("/:sessionKey/tasks", async (req, res) => {
       sessionId = sessionResult.rows[0].id;
     }
 
+    // Auto-generate task_number if not provided
+    let finalTaskNumber = task_number;
+    if (!finalTaskNumber) {
+      const maxTaskNumberResult = await query<{ max_task_number: number | null }>(
+        "SELECT MAX(task_number) as max_task_number FROM tasks WHERE session_id = $1",
+        [sessionId]
+      );
+      const maxTaskNumber = maxTaskNumberResult.rows[0]?.max_task_number ?? 0;
+      finalTaskNumber = maxTaskNumber + 1;
+    }
+
+    // Add source: user to metadata
+    const enrichedMetadata = {
+      ...metadata,
+      source: "user",
+    };
+
     // Insert the task
     const taskResult = await query<Task>(
       `INSERT INTO tasks (
@@ -264,7 +281,7 @@ router.post("/:sessionKey/tasks", async (req, res) => {
       RETURNING *`,
       [
         sessionId,
-        task_number,
+        finalTaskNumber,
         subject,
         description,
         active_form,
@@ -272,7 +289,7 @@ router.post("/:sessionKey/tasks", async (req, res) => {
         priority,
         blocks,
         blocked_by,
-        JSON.stringify(metadata),
+        JSON.stringify(enrichedMetadata),
       ]
     );
 

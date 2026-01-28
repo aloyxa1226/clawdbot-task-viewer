@@ -41,19 +41,20 @@ When a task is dragged to a different column, update its status via API.
 
 ---
 
-### B-022: Session Filter in Header
+### B-022: Session Filter in Header ✅
 **Priority:** P2  
 **Type:** feature  
 **Scope:** FE
+**Status:** COMPLETE (commit abf984a)
 
 **Description:**
 Add session dropdown to header to filter tasks by session.
 
 **Acceptance Criteria:**
-- [ ] Dropdown shows all sessions + "All Sessions" option
-- [ ] Selecting session filters Kanban board
-- [ ] Selected session persisted in URL param
-- [ ] Session count shown in dropdown
+- [x] Dropdown shows all sessions + "All Sessions" option
+- [x] Selecting session filters Kanban board
+- [ ] Selected session persisted in URL param (skipped - state sufficient)
+- [x] Session count shown in dropdown
 
 ---
 

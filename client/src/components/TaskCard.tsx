@@ -33,11 +33,11 @@ function getRelativeTime(dateString: string): string {
 // Map priority number to pip color for background
 function getPriorityPipColor(priority: number): string {
   const colors = {
-    0: 'bg-gray-500',      // P0
+    0: 'bg-red-500',       // P0 - highest priority
     1: 'bg-orange-500',    // P1
     2: 'bg-yellow-500',    // P2
     3: 'bg-blue-500',      // P3
-    4: 'bg-red-500',       // P4
+    4: 'bg-gray-500',      // P4 - lowest priority
   };
   return colors[priority as keyof typeof colors] || 'bg-gray-500';
 }

@@ -27,14 +27,15 @@
 ### Non-Goals (Out of Scope)
 - User authentication or role-based access control.
 - Fine-grained control over Ngrok configuration (beyond basic tunnel creation).
-- Task creation within the task viewer application (ClawdBot pushes tasks).
 - Task editing/deletion for tasks NOT in `pending` (backlog) state.
 
 ### In Scope (Clarification)
-- Task editing IS allowed for `pending` (backlog) tasks, including:
+- **Task creation from UI** — Users can create new tasks in `pending` (backlog) state. ClawdBot polls for user-created backlog tasks and picks them up.
+- **Task editing** for `pending` (backlog) tasks:
   - Updating task subject, description, priority
   - Adding/removing file attachments
   - Deleting the task entirely
+- **Task source tracking** — Tasks have a `source` field (`clawdbot` | `user`) so ClawdBot knows which backlog tasks to pick up.
 
 ---
 
@@ -104,13 +105,25 @@
   - [ ] Edit/delete buttons are hidden for non-pending tasks.
   - [ ] Typecheck passes
 
+#### [US-009]: Create Tasks from UI
+- **As a** user **I want** to create new tasks from the UI **so that** I can add work items for ClawdBot to pick up.
+- **Acceptance Criteria:**
+  - [ ] A "New Task" button is available in the UI.
+  - [ ] Users can specify subject, description, priority, and session.
+  - [ ] Users can attach files during task creation.
+  - [ ] New tasks are created with `status: pending` and `source: user`.
+  - [ ] ClawdBot can query for `pending` tasks with `source: user` to pick up.
+  - [ ] Typecheck passes
+
 ### Functional Requirements
 - FR-1: The API endpoint `/api/v1/sessions/:sessionKey/tasks` accepts POST requests with the specified JSON schema.
 - FR-2: The application persists task data in a PostgreSQL database with a 30-day rolling retention policy.
 - FR-3: The application uses Redis pub/sub for real-time updates to the Kanban board.
 - FR-4: File attachments are stored on the filesystem, with file paths stored in the database.
 - FR-5: A cron job automatically purges old task data and files older than 30 days.
-- FR-6: Pending tasks can be deleted via the UI, which triggers a deletion in the database.
+- FR-6: Pending tasks can be edited/deleted via the UI.
+- FR-7: Tasks have a `source` field (`clawdbot` | `user`) to track origin.
+- FR-8: API endpoint `/api/v1/tasks?status=pending&source=user` allows ClawdBot to query user-created backlog tasks.
 
 ### Technical Considerations
 - The application uses Node.js + TypeScript, PostgreSQL 16, Redis 7, React 18, TailwindCSS + shadcn/ui, Docker + Docker Compose, and Ngrok.

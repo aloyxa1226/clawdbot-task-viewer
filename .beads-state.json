@@ -1,0 +1,41 @@
+{
+  "version": "1.0.0",
+  "project_root": "/Users/admin/clawd/clawdbot-task-viewer",
+  "worktree_base": "/Users/admin/clawd/clawdbot-task-viewer/.worktrees",
+  "beads": {
+    "clawdbot-task-viewer-lla": {
+      "id": "clawdbot-task-viewer-lla",
+      "worktree_path": "/Users/admin/clawd/clawdbot-task-viewer/.worktrees/clawdbot-task-viewer-lla",
+      "branch_name": "bead/clawdbot-task-viewer-lla",
+      "status": "merged",
+      "started_at": "2026-01-28T22:26:32Z",
+      "tests_passed": true,
+      "retry_count": 0,
+      "log_file": "/Users/admin/clawd/clawdbot-task-viewer/logs/bead-clawdbot-task-viewer-lla.log",
+      "subagent_pid": 93760,
+      "verified_at": "2026-01-28T22:29:47Z",
+      "merged_at": "2026-01-28T22:29:51Z",
+      "merge_commit": "380fb861c349834900d7c7aa7f2098a5d4bbbbdc"
+    },
+    "clawdbot-task-viewer-kqx": {
+      "id": "clawdbot-task-viewer-kqx",
+      "worktree_path": "/Users/admin/clawd/clawdbot-task-viewer/.worktrees/clawdbot-task-viewer-kqx",
+      "branch_name": "bead/clawdbot-task-viewer-kqx",
+      "status": "verified",
+      "started_at": "2026-01-28T22:28:21Z",
+      "tests_passed": true,
+      "retry_count": 0,
+      "log_file": "/Users/admin/clawd/clawdbot-task-viewer/logs/bead-clawdbot-task-viewer-kqx.log",
+      "subagent_pid": 94900,
+      "last_error": "Process died unexpectedly",
+      "verified_at": "2026-01-28T22:30:08Z"
+    }
+  },
+  "execution": {
+    "started_at": "2026-01-28T22:19:54Z",
+    "last_updated": "2026-01-28T22:30:08Z",
+    "iteration": 2,
+    "max_parallel": 3,
+    "active_subagents": 0
+  }
+}

@@ -1,11 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
-import { Task, Session, TaskFile } from "./types/task";
-import { TaskCard } from "./components/TaskCard";
+import { DragDropContext, DropResult } from "@hello-pangea/dnd";
+import { Task, Session } from "./types/task";
 import { TaskDetailDialog } from "./components/TaskDetailDialog";
 import { TaskCreateDialog } from "./components/TaskCreateDialog";
-import { TaskEditDialog } from "./components/TaskEditDialog";
 import { SessionsSidebar } from "./components/SessionsSidebar";
 import { TaskSearch } from "./components/TaskSearch";
+import { KanbanColumn } from "./components/KanbanColumn";
 import { Plus, RefreshCw } from "lucide-react";
 
 interface HealthStatus {
@@ -23,9 +23,6 @@ function App() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [editDialogFiles, setEditDialogFiles] = useState<TaskFile[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [tasksLoading, setTasksLoading] = useState(true);
   const [selectedSession, _setSelectedSession] = useState<string | null>(null);
@@ -113,45 +110,43 @@ function App() {
     setSelectedTask(null);
   };
 
-  const handleEditTaskHover = (task: Task) => {
-    setEditingTask(task);
-    setEditDialogOpen(true);
-  };
+  const handleDragEnd = (result: DropResult) => {
+    const { destination, source, draggableId } = result;
 
-  const handleDeleteTaskHover = async (task: Task) => {
-    // Show confirmation before deleting
-    if (confirm(`Delete task #${task.task_number}? This cannot be undone.`)) {
-      try {
-        const response = await fetch(`/api/v1/sessions/tasks/${task.id}`, {
-          method: 'DELETE',
+    // If dropped outside of a droppable area
+    if (!destination) {
+      return;
+    }
+
+    // If dropped in the same position
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
+
+    // Reorder tasks within the same column (for now)
+    // Full cross-column drag-drop would require status update via API
+    if (destination.droppableId === source.droppableId) {
+      const status = source.droppableId as 'pending' | 'in_progress' | 'completed';
+      const columnTasks = tasks.filter(t => t.status === status);
+      const draggedTask = columnTasks.find(t => t.id === draggableId);
+
+      if (draggedTask) {
+        const newTasks = columnTasks.filter(t => t.id !== draggableId);
+        newTasks.splice(destination.index, 0, draggedTask);
+
+        const updatedTasks = tasks.map(t => {
+          if (t.status === status) {
+            return { ...t };
+          }
+          return t;
         });
-        if (!response.ok) {
-          alert('Failed to delete task');
-          return;
-        }
-        fetchAllTasks();
-      } catch (err) {
-        console.error('Error deleting task:', err);
-        alert('Error deleting task');
+
+        setTasks(updatedTasks);
       }
     }
-  };
-
-  const handleEditDialogUpdate = (task: Task) => {
-    // Update the task in state and refresh
-    setTasks(prev => prev.map(t => t.id === task.id ? task : t));
-    fetchAllTasks();
-    setEditDialogOpen(false);
-  };
-
-  const handleEditDialogDelete = () => {
-    fetchAllTasks();
-    setEditDialogOpen(false);
-    setEditingTask(null);
-  };
-
-  const handleEditDialogFilesUpdate = (files: TaskFile[]) => {
-    setEditDialogFiles(files);
   };
 
   const pendingTasks = tasks.filter(t => t.status === 'pending');
@@ -230,68 +225,28 @@ function App() {
 
           <section className="rounded-lg border bg-card p-6">
             <h2 className="mb-4 text-xl font-semibold">Kanban Board</h2>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="rounded-lg bg-muted p-4">
-                <h3 className="mb-3 font-medium">Pending ({pendingTasks.length})</h3>
-                <div className="space-y-3">
-                  {pendingTasks.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      No pending tasks
-                    </p>
-                  ) : (
-                    pendingTasks.map(task => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        onClick={() => handleTaskClick(task)}
-                        onEdit={() => handleEditTaskHover(task)}
-                        onDelete={() => handleDeleteTaskHover(task)}
-                      />
-                    ))
-                  )}
-                </div>
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <div className="grid grid-cols-3 gap-4 h-96">
+                <KanbanColumn
+                  status="pending"
+                  tasks={pendingTasks}
+                  totalTasks={tasks.length}
+                  onTaskClick={handleTaskClick}
+                />
+                <KanbanColumn
+                  status="in_progress"
+                  tasks={inProgressTasks}
+                  totalTasks={tasks.length}
+                  onTaskClick={handleTaskClick}
+                />
+                <KanbanColumn
+                  status="completed"
+                  tasks={completedTasks}
+                  totalTasks={tasks.length}
+                  onTaskClick={handleTaskClick}
+                />
               </div>
-              <div className="rounded-lg bg-muted p-4">
-                <h3 className="mb-3 font-medium">In Progress ({inProgressTasks.length})</h3>
-                <div className="space-y-3">
-                  {inProgressTasks.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      No active tasks
-                    </p>
-                  ) : (
-                    inProgressTasks.map(task => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        onClick={() => handleTaskClick(task)}
-                        onEdit={() => handleEditTaskHover(task)}
-                        onDelete={() => handleDeleteTaskHover(task)}
-                      />
-                    ))
-                  )}
-                </div>
-              </div>
-              <div className="rounded-lg bg-muted p-4">
-                <h3 className="mb-3 font-medium">Completed ({completedTasks.length})</h3>
-                <div className="space-y-3">
-                  {completedTasks.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      No completed tasks
-                    </p>
-                  ) : (
-                    completedTasks.map(task => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        onClick={() => handleTaskClick(task)}
-                        onEdit={() => handleEditTaskHover(task)}
-                        onDelete={() => handleDeleteTaskHover(task)}
-                      />
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
+            </DragDropContext>
           </section>
 
           <TaskDetailDialog
@@ -309,18 +264,6 @@ function App() {
             onTaskCreated={handleTaskCreated}
             allTasks={tasks}
           />
-
-          {editingTask && (
-            <TaskEditDialog
-              task={editingTask}
-              open={editDialogOpen}
-              onOpenChange={setEditDialogOpen}
-              onTaskUpdated={handleEditDialogUpdate}
-              onTaskDeleted={handleEditDialogDelete}
-              files={editDialogFiles}
-              onFilesUpdated={handleEditDialogFilesUpdate}
-            />
-          )}
         </div>
       </main>
       </div>

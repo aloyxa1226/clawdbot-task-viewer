@@ -244,7 +244,7 @@ export function TaskCreateDialog({
                   />
                 </label>
                 {fileInput && (
-                  <p className="text-xs text-green-600">
+                  <p className="text-xs text-green-400">
                     Ready to upload: {fileInput.name}
                   </p>
                 )}

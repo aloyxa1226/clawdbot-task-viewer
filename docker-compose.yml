@@ -10,6 +10,7 @@ services:
       - PORT=3456
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/taskviewer
       - REDIS_URL=redis://redis:6379
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN:-}
     depends_on:
       postgres:
         condition: service_healthy

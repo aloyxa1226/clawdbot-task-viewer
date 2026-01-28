@@ -5,6 +5,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { createPool, closePool, testConnection } from "./db/index.js";
 import { getRedisClient, closeRedis, testRedisConnection } from "./redis/index.js";
+import { initializeTunnel, closeTunnel, killAllTunnels, getTunnelUrl } from "./ngrok/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,6 +22,7 @@ app.use(express.urlencoded({ extended: true }));
 app.get("/api/health", async (_req, res) => {
   const dbConnected = await testConnection();
   const redisConnected = await testRedisConnection();
+  const tunnelUrl = getTunnelUrl();
 
   res.json({
     status: dbConnected && redisConnected ? "healthy" : "degraded",
@@ -28,6 +30,10 @@ app.get("/api/health", async (_req, res) => {
     services: {
       database: dbConnected ? "connected" : "disconnected",
       redis: redisConnected ? "connected" : "disconnected",
+    },
+    tunnel: {
+      url: tunnelUrl,
+      active: tunnelUrl !== null,
     },
   });
 });
@@ -57,17 +63,32 @@ async function start(): Promise<void> {
   try {
     // Initialize database pool
     createPool();
-    console.log("Database pool created");
+    console.log("✅ Database pool created");
 
     // Initialize Redis client
     const redis = getRedisClient();
     await redis.connect();
-    console.log("Redis connected");
+    console.log("✅ Redis connected");
 
     // Start the server
-    app.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
-      console.log(`Health check: http://localhost:${PORT}/api/health`);
+    const server = app.listen(PORT, async () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+      console.log(`🔍 Health check: http://localhost:${PORT}/api/health`);
+      
+      // Initialize Ngrok tunnel
+      try {
+        const tunnelUrl = await initializeTunnel(PORT);
+        console.log(`📡 Application is publicly accessible at: ${tunnelUrl}`);
+      } catch (error) {
+        console.warn("⚠️  Ngrok tunnel failed to start:", error);
+        console.log("📍 Application is only accessible locally");
+      }
+    });
+
+    // Handle server errors
+    server.on("error", (error) => {
+      console.error("Server error:", error);
+      process.exit(1);
     });
   } catch (error) {
     console.error("Failed to start server:", error);
@@ -77,10 +98,25 @@ async function start(): Promise<void> {
 
 // Graceful shutdown
 async function shutdown(): Promise<void> {
-  console.log("Shutting down gracefully...");
-  await closePool();
-  await closeRedis();
-  process.exit(0);
+  console.log("🛑 Shutting down gracefully...");
+  
+  try {
+    // Close Ngrok tunnel
+    await closeTunnel();
+    
+    // Close database and Redis connections
+    await closePool();
+    await closeRedis();
+    
+    // Kill all Ngrok processes to ensure clean shutdown
+    await killAllTunnels();
+    
+    console.log("✅ Shutdown complete");
+    process.exit(0);
+  } catch (error) {
+    console.error("Error during shutdown:", error);
+    process.exit(1);
+  }
 }
 
 process.on("SIGINT", shutdown);

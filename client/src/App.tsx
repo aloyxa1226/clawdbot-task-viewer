@@ -25,7 +25,7 @@ function App() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [editDialogFiles, setEditDialogFiles] = useState<any[]>([]);
+  const [editDialogFiles, setEditDialogFiles] = useState<TaskFile[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [tasksLoading, setTasksLoading] = useState(true);
   const [selectedSession, _setSelectedSession] = useState<string | null>(null);

@@ -1,0 +1,45 @@
+# ClawdBot Task Viewer - PICT Test Model
+# Covers: PRD v1.0 (original) + PRD-002 (UI Overhaul)
+# Generated: 2026-01-28
+
+# Task Status (5-column Kanban)
+TaskStatus: backlog, pending, in_progress, blocked, completed
+
+# Task Priority (affects pip color)
+TaskPriority: P0, P1, P2, P3, P4
+
+# Session Filter
+SessionFilter: all_sessions, specific_session
+
+# Task Source (who created it)
+TaskSource: clawdbot, user
+
+# Operation
+Operation: view_board, view_detail, create_task, edit_task, delete_task, drag_drop_status, search_task
+
+# UI Theme (dark theme is default)
+Theme: dark
+
+# Has Dependencies
+HasDependencies: yes, no
+
+# Has Files
+HasFiles: yes, no
+
+# Constraints
+
+# Can only edit/delete pending tasks (user-created)
+IF [Operation] = "edit_task" THEN [TaskStatus] = "pending";
+IF [Operation] = "delete_task" THEN [TaskStatus] = "pending";
+
+# Create task always creates in pending status
+IF [Operation] = "create_task" THEN [TaskStatus] = "pending" AND [TaskSource] = "user";
+
+# Drag-drop changes status (not for completed tasks typically)
+IF [Operation] = "drag_drop_status" THEN [TaskStatus] <> "completed";
+
+# Search works across all statuses
+IF [Operation] = "search_task" THEN [HasFiles] = "no";
+
+# Blocked tasks should show dependencies
+IF [TaskStatus] = "blocked" THEN [HasDependencies] = "yes";

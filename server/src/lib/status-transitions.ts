@@ -1,36 +1,24 @@
 import { V2Status, Actor } from '../types/v2.js';
 
 // Valid transitions per actor, derived from PRD US-101:
-// queued → claimed (AI only)
-// claimed → in_progress (AI only)
-// in_progress → review | queued (AI only)
-// review → done | in_progress (AL only)
-// done → archived (either)
-// any → queued (either; reset)
+// AL is superuser — can transition between ANY two distinct statuses.
+// AI: queued → claimed, claimed → in_progress, in_progress → review | queued, etc.
+// System: any → queued, done → archived.
+
+const ALL_STATUSES: V2Status[] = ['queued', 'claimed', 'in_progress', 'review', 'done', 'archived'];
 
 type TransitionMap = Record<string, Partial<Record<V2Status, V2Status[]>>>;
 
 const transitions: TransitionMap = {
-  al: {
-    review: ['done', 'in_progress'],
-    done: ['archived'],
-    // any → queued
-    queued: [],
-    claimed: ['queued'],
-    in_progress: ['queued'],
-    archived: ['queued'],
-  },
   ai: {
     queued: ['claimed'],
     claimed: ['in_progress', 'queued'],
     in_progress: ['review', 'queued'],
     done: ['archived'],
-    // any → queued
     review: ['queued'],
     archived: ['queued'],
   },
   system: {
-    // system can do any → queued and done → archived
     queued: [],
     claimed: ['queued'],
     in_progress: ['queued'],
@@ -41,8 +29,13 @@ const transitions: TransitionMap = {
 };
 
 export function isValidTransition(from: V2Status, to: V2Status, actor: Actor): boolean {
-  // any → queued is allowed for al and ai
-  if (to === 'queued' && (actor === 'al' || actor === 'ai' || actor === 'system')) {
+  if (from === to) return false;
+
+  // AL is superuser — any from→to where from !== to
+  if (actor === 'al') return true;
+
+  // any → queued is allowed for ai and system
+  if (to === 'queued' && (actor === 'ai' || actor === 'system')) {
     return true;
   }
 
@@ -56,11 +49,16 @@ export function isValidTransition(from: V2Status, to: V2Status, actor: Actor): b
 }
 
 export function getAllowedTransitions(from: V2Status, actor: Actor): V2Status[] {
+  // AL is superuser — all statuses except current
+  if (actor === 'al') {
+    return ALL_STATUSES.filter(s => s !== from);
+  }
+
   const actorTransitions = transitions[actor];
   if (!actorTransitions) return [];
 
   const allowed = actorTransitions[from] || [];
-  // Always include queued (any → queued) for al/ai/system
+  // Always include queued (any → queued) for ai/system
   if (!allowed.includes('queued') && from !== 'queued') {
     return [...allowed, 'queued'];
   }

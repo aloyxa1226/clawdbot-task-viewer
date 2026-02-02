@@ -82,8 +82,8 @@ router.post('/', async (req, res) => {
         template_type || null,
         JSON.stringify(template_data || {}),
         assigned_to,
-        JSON.stringify(blocks),
-        JSON.stringify(blocked_by),
+        blocks.length > 0 ? blocks : null,
+        blocked_by.length > 0 ? blocked_by : null,
         JSON.stringify(metadata),
       ]
     );

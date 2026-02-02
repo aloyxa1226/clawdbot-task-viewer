@@ -12,7 +12,7 @@ export function useTasks(slug: string | undefined) {
     try {
       setLoading(true);
       const data = await fetchWorkspaceTasks(slug);
-      setTasks(data.tasks || []);
+      setTasks(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch tasks');

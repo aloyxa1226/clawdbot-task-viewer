@@ -65,8 +65,8 @@ export function useDashboard() {
   const refresh = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await apiFetch<{ ok: boolean; data: DashboardData }>('/dashboard');
-      setData(res.data);
+      const res = await apiFetch<DashboardData>('/dashboard');
+      setData(res);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch dashboard');

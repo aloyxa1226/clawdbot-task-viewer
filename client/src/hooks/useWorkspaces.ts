@@ -11,7 +11,7 @@ export function useWorkspaces() {
     try {
       setLoading(true);
       const data = await fetchWorkspaces();
-      setWorkspaces(data.workspaces || []);
+      setWorkspaces(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch workspaces');

@@ -19,18 +19,23 @@ router.get('/health', (_req, res) => {
 router.get('/queue', async (req: Request, res: Response) => {
   try {
     const workspace = req.query.workspace as string | undefined;
-    if (!workspace) {
-      res.status(400).json({ ok: false, error: 'workspace query parameter required' });
-      return;
-    }
 
-    const result = await query<V2Task>(
-      `SELECT t.* FROM v2_tasks t
-       JOIN workspaces w ON w.id = t.workspace_id
-       WHERE w.slug = $1 AND t.status = 'queued'
-       ORDER BY t.priority DESC, t.created_at ASC`,
-      [workspace]
-    );
+    let result;
+    if (workspace) {
+      result = await query<V2Task>(
+        `SELECT t.* FROM tasks t
+         JOIN workspaces w ON w.id = t.workspace_id
+         WHERE w.slug = $1 AND t.status = 'queued'
+         ORDER BY t.priority DESC, t.created_at ASC`,
+        [workspace]
+      );
+    } else {
+      result = await query<V2Task>(
+        `SELECT t.* FROM tasks t
+         WHERE t.status = 'queued'
+         ORDER BY t.priority DESC, t.created_at ASC`
+      );
+    }
 
     res.json({ ok: true, data: result.rows });
   } catch (err) {
@@ -49,7 +54,7 @@ router.post('/claim', async (req: Request, res: Response) => {
     }
 
     const taskResult = await query<V2Task>(
-      'SELECT * FROM v2_tasks WHERE id = $1',
+      'SELECT * FROM tasks WHERE id = $1',
       [task_id]
     );
 
@@ -76,7 +81,7 @@ router.post('/claim', async (req: Request, res: Response) => {
     }
 
     const updated = await query<V2Task>(
-      `UPDATE v2_tasks SET status = 'claimed', assigned_to = 'ai', updated_at = NOW()
+      `UPDATE tasks SET status = 'claimed', assigned_to = 'ai', updated_at = NOW()
        WHERE id = $1 RETURNING *`,
       [task_id]
     );
@@ -98,7 +103,7 @@ router.patch('/tasks/:id/progress', async (req: Request, res: Response) => {
     const { status, notes, review_notes } = req.body;
 
     const taskResult = await query<V2Task>(
-      'SELECT * FROM v2_tasks WHERE id = $1',
+      'SELECT * FROM tasks WHERE id = $1',
       [id]
     );
 
@@ -136,7 +141,7 @@ router.patch('/tasks/:id/progress', async (req: Request, res: Response) => {
 
     params.push(id);
     const updated = await query<V2Task>(
-      `UPDATE v2_tasks SET ${updates.join(', ')} WHERE id = $${paramIdx} RETURNING *`,
+      `UPDATE tasks SET ${updates.join(', ')} WHERE id = $${paramIdx} RETURNING *`,
       params
     );
 
@@ -166,7 +171,7 @@ router.post('/tasks/:id/complete', async (req: Request, res: Response) => {
     }
 
     const taskResult = await query<V2Task>(
-      'SELECT * FROM v2_tasks WHERE id = $1',
+      'SELECT * FROM tasks WHERE id = $1',
       [id]
     );
 
@@ -193,7 +198,7 @@ router.post('/tasks/:id/complete', async (req: Request, res: Response) => {
     }
 
     const updated = await query<V2Task>(
-      `UPDATE v2_tasks SET status = 'review', review_notes = $1, metadata = $2, updated_at = NOW()
+      `UPDATE tasks SET status = 'review', review_notes = $1, metadata = $2, updated_at = NOW()
        WHERE id = $3 RETURNING *`,
       [review_notes, JSON.stringify(metadata), id]
     );

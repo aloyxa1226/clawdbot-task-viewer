@@ -114,6 +114,7 @@ CREATE TABLE IF NOT EXISTS briefings (
 );
 
 CREATE INDEX IF NOT EXISTS idx_briefings_date ON briefings(date);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_briefings_date_unique ON briefings(date) WHERE workspace_id IS NULL;
 
 -- ============================================================
 -- 5. Schema migrations tracking

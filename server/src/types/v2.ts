@@ -4,7 +4,7 @@ export type V2Status = 'queued' | 'claimed' | 'in_progress' | 'review' | 'done' 
 export type Actor = 'al' | 'ai' | 'system';
 export type AssignedTo = 'al' | 'ai' | 'unassigned';
 export type TemplateType = 'feature' | 'bug' | 'architecture' | 'research' | 'code';
-export type ActivityAction = 'created' | 'status_changed' | 'assigned' | 'commented' | 'template_updated';
+export type ActivityAction = 'created' | 'status_changed' | 'assigned' | 'commented' | 'template_updated' | 'updated';
 
 // Template data schemas
 export interface FeatureTemplateData {

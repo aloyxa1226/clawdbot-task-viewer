@@ -109,7 +109,7 @@ router.post('/generate', async (_req, res) => {
     const result = await query<Briefing>(
       `INSERT INTO briefings (date, content)
        VALUES ($1, $2)
-       ON CONFLICT (date) DO UPDATE SET content = $2, created_at = NOW()
+       ON CONFLICT (date) WHERE workspace_id IS NULL DO UPDATE SET content = $2, created_at = NOW()
        RETURNING *`,
       [today, JSON.stringify(content)]
     );

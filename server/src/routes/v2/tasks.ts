@@ -1,8 +1,9 @@
 import { Router } from 'express';
 import { query } from '../../db/index.js';
 import { logActivity } from '../../lib/activity.js';
+import { isValidTransition } from '../../lib/status-transitions.js';
 import { validateTemplateData } from '../../lib/template-validation.js';
-import type { TaskActivity, V2Task, Actor, ActivityAction, TemplateType, AssignedTo, ApiResponse } from '../../types/v2.js';
+import type { TaskActivity, V2Task, V2Status, Actor, ActivityAction, TemplateType, AssignedTo, ApiResponse } from '../../types/v2.js';
 
 const router = Router();
 
@@ -23,7 +24,7 @@ router.post('/', async (req, res) => {
       priority = 0,
       template_type = null,
       template_data = {},
-      assigned_to = 'unassigned',
+      assigned_to = 'ai',
       blocks = [],
       blocked_by = [],
       metadata = {},
@@ -101,6 +102,187 @@ router.post('/', async (req, res) => {
   } catch (error) {
     console.error('Error creating v2 task:', error);
     const response: ApiResponse = { ok: false, error: 'Failed to create task' };
+    res.status(500).json(response);
+  }
+});
+
+/**
+ * GET /api/v2/tasks/:id
+ * Get a single task by ID.
+ */
+router.get('/:id', async (req, res) => {
+  try {
+    const result = await query<V2Task>(
+      'SELECT * FROM tasks WHERE id = $1',
+      [req.params.id]
+    );
+    if (result.rows.length === 0) {
+      const response: ApiResponse = { ok: false, error: 'Task not found' };
+      res.status(404).json(response);
+      return;
+    }
+    const response: ApiResponse<V2Task> = { ok: true, data: result.rows[0] };
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching task:', error);
+    const response: ApiResponse = { ok: false, error: 'Failed to fetch task' };
+    res.status(500).json(response);
+  }
+});
+
+/**
+ * PATCH /api/v2/tasks/:id
+ * Update task fields (subject, description, priority, metadata, etc.)
+ */
+router.patch('/:id', async (req, res) => {
+  try {
+    const taskId = req.params.id;
+    const { subject, description, priority, template_data, metadata, blocks, blocked_by } = req.body;
+
+    const existing = await query<V2Task>('SELECT * FROM tasks WHERE id = $1', [taskId]);
+    if (existing.rows.length === 0) {
+      const response: ApiResponse = { ok: false, error: 'Task not found' };
+      res.status(404).json(response);
+      return;
+    }
+
+    const updates: string[] = ['updated_at = NOW()'];
+    const params: unknown[] = [];
+    let idx = 1;
+
+    if (subject !== undefined) { updates.push(`subject = $${idx++}`); params.push(subject.trim()); }
+    if (description !== undefined) { updates.push(`description = $${idx++}`); params.push(description?.trim() || null); }
+    if (priority !== undefined) { updates.push(`priority = $${idx++}`); params.push(priority); }
+    if (template_data !== undefined) { updates.push(`template_data = $${idx++}`); params.push(JSON.stringify(template_data)); }
+    if (metadata !== undefined) { updates.push(`metadata = $${idx++}`); params.push(JSON.stringify(metadata)); }
+    if (blocks !== undefined) { updates.push(`blocks = $${idx++}`); params.push(blocks.length > 0 ? blocks : null); }
+    if (blocked_by !== undefined) { updates.push(`blocked_by = $${idx++}`); params.push(blocked_by.length > 0 ? blocked_by : null); }
+
+    if (params.length === 0) {
+      const response: ApiResponse = { ok: false, error: 'No fields to update' };
+      res.status(400).json(response);
+      return;
+    }
+
+    params.push(taskId);
+    const result = await query<V2Task>(
+      `UPDATE tasks SET ${updates.join(', ')} WHERE id = $${idx} RETURNING *`,
+      params
+    );
+
+    await logActivity(taskId, 'al', 'updated', { fields: Object.keys(req.body) });
+
+    const response: ApiResponse<V2Task> = { ok: true, data: result.rows[0] };
+    res.json(response);
+  } catch (error) {
+    console.error('Error updating task:', error);
+    const response: ApiResponse = { ok: false, error: 'Failed to update task' };
+    res.status(500).json(response);
+  }
+});
+
+/**
+ * Helper: determine assigned_to based on status
+ */
+function assignedToForStatus(status: V2Status): AssignedTo | null {
+  switch (status) {
+    case 'claimed':
+    case 'in_progress':
+      return 'ai';
+    case 'review':
+      return 'al';
+    case 'queued':
+      return 'unassigned';
+    default:
+      return null;
+  }
+}
+
+/**
+ * PATCH /api/v2/tasks/:id/status
+ * Change task status with transition validation.
+ */
+router.patch('/:id/status', async (req, res) => {
+  try {
+    const taskId = req.params.id;
+    const { status, actor = 'al' } = req.body as { status: V2Status; actor?: Actor };
+
+    if (!status) {
+      const response: ApiResponse = { ok: false, error: 'status is required' };
+      res.status(400).json(response);
+      return;
+    }
+
+    const existing = await query<V2Task>('SELECT * FROM tasks WHERE id = $1', [taskId]);
+    if (existing.rows.length === 0) {
+      const response: ApiResponse = { ok: false, error: 'Task not found' };
+      res.status(404).json(response);
+      return;
+    }
+
+    const task = existing.rows[0];
+
+    if (!isValidTransition(task.status as V2Status, status, actor)) {
+      const response: ApiResponse = {
+        ok: false,
+        error: `Invalid transition from '${task.status}' to '${status}' for actor '${actor}'`,
+      };
+      res.status(422).json(response);
+      return;
+    }
+
+    const updates: string[] = [`status = $1`, `updated_at = NOW()`];
+    const params: unknown[] = [status];
+    let idx = 2;
+
+    const newAssignee = assignedToForStatus(status);
+    if (newAssignee) {
+      updates.push(`assigned_to = $${idx++}`);
+      params.push(newAssignee);
+    }
+
+    params.push(taskId);
+    const result = await query<V2Task>(
+      `UPDATE tasks SET ${updates.join(', ')} WHERE id = $${idx} RETURNING *`,
+      params
+    );
+
+    await logActivity(taskId, actor, 'status_changed', { from: task.status, to: status });
+    if (newAssignee) {
+      await logActivity(taskId, actor, 'assigned', { assigned_to: newAssignee });
+    }
+
+    const response: ApiResponse<V2Task> = { ok: true, data: result.rows[0] };
+    res.json(response);
+  } catch (error) {
+    console.error('Error updating task status:', error);
+    const response: ApiResponse = { ok: false, error: 'Failed to update task status' };
+    res.status(500).json(response);
+  }
+});
+
+/**
+ * DELETE /api/v2/tasks/:id
+ * Delete a task.
+ */
+router.delete('/:id', async (req, res) => {
+  try {
+    const taskId = req.params.id;
+
+    const existing = await query<V2Task>('SELECT * FROM tasks WHERE id = $1', [taskId]);
+    if (existing.rows.length === 0) {
+      const response: ApiResponse = { ok: false, error: 'Task not found' };
+      res.status(404).json(response);
+      return;
+    }
+
+    await query('DELETE FROM tasks WHERE id = $1', [taskId]);
+
+    const response: ApiResponse = { ok: true };
+    res.json(response);
+  } catch (error) {
+    console.error('Error deleting task:', error);
+    const response: ApiResponse = { ok: false, error: 'Failed to delete task' };
     res.status(500).json(response);
   }
 });

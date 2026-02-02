@@ -41,10 +41,12 @@ app.get("/api/health", async (_req, res) => {
 // Import API routes
 import sessionsRouter from "./routes/sessions.js";
 import filesRouter from "./routes/files.js";
+import v2Router from "./routes/v2/index.js";
 
 // API routes
 app.use("/api/v1/sessions", sessionsRouter);
 app.use("/api/v1", filesRouter);
+app.use("/api/v2", v2Router);
 
 // Serve static files in production
 if (process.env.NODE_ENV === "production") {

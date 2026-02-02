@@ -1,0 +1,24 @@
+# PICT Model — ClawdBot Task Viewer v2
+# Combinatorial test coverage for Phase 1 features
+
+# Parameters
+Workspace:          celito, opendots, personal
+TaskStatus:         queued, claimed, in_progress, review, done, archived
+TemplateType:       feature, bug, architecture, research, code, freeform
+Actor:              al, ai, system
+AssignedTo:         al, ai, unassigned
+TransitionValid:    yes, no
+HasTemplateData:    yes, no
+ActivityAction:     created, status_changed, assigned, commented, template_updated
+
+# Constraints
+# AI can only claim/progress, AL can only approve/reject review
+IF [Actor] = "ai"   AND [TaskStatus] = "review"   THEN [TransitionValid] = "no";
+IF [Actor] = "al"   AND [TaskStatus] = "claimed"   THEN [TransitionValid] = "no";
+# Freeform tasks don't require template data
+IF [TemplateType] = "freeform" THEN [HasTemplateData] = "no";
+# System actor only for auto-generated events
+IF [Actor] = "system" THEN [ActivityAction] IN {"created", "assigned"};
+# Status-assignment coupling
+IF [TaskStatus] IN {"claimed", "in_progress"} THEN [AssignedTo] = "ai";
+IF [TaskStatus] = "review" THEN [AssignedTo] = "al";

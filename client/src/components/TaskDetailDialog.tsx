@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Task, TaskFile } from '../types/task';
+import type { TemplateType, TemplateData } from '../types/v2';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X, Lock, AlertCircle, FileText, Edit2 } from 'lucide-react';
 import { TaskEditDialog } from './TaskEditDialog';
+import { TemplateView } from './TemplateView';
 
 interface TaskDetailDialogProps {
   task: Task | null;
@@ -96,6 +98,13 @@ export function TaskDetailDialog({ task, allTasks, open, onOpenChange, onTaskUpd
               <h3 className="font-medium text-sm text-muted-foreground mb-1">Description</h3>
               <p className="text-sm">{task.description || 'No description provided'}</p>
             </div>
+
+            {(task as unknown as { template_type: TemplateType | null }).template_type && (
+              <TemplateView
+                templateType={(task as unknown as { template_type: TemplateType }).template_type}
+                templateData={(task as unknown as { template_data: TemplateData }).template_data}
+              />
+            )}
 
             <div>
               <h3 className="font-medium text-sm text-muted-foreground mb-1">Status</h3>

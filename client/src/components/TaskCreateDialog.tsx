@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Task, Session } from '../types/task';
+import type { TemplateType } from '../types/v2';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X, Plus } from 'lucide-react';
+import { TemplateForm } from './TemplateForm';
 
 interface TaskCreateDialogProps {
   open: boolean;
@@ -25,6 +27,8 @@ export function TaskCreateDialog({
   const [error, setError] = useState<string | null>(null);
   const [fileInput, setFileInput] = useState<File | null>(null);
   const [sessionsLoading, setSessionsLoading] = useState(true);
+  const [templateType, setTemplateType] = useState<TemplateType | null>(null);
+  const [templateData, setTemplateData] = useState<Record<string, unknown>>({});
 
   // Fetch sessions when dialog opens
   useEffect(() => {
@@ -121,6 +125,8 @@ export function TaskCreateDialog({
       setDescription('');
       setPriority(0);
       setFileInput(null);
+      setTemplateType(null);
+      setTemplateData({});
 
       onTaskCreated(newTask);
       onOpenChange(false);
@@ -226,6 +232,36 @@ export function TaskCreateDialog({
                 <option value={4}>Critical (4)</option>
               </select>
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">
+                Template Type
+              </label>
+              <select
+                value={templateType || ''}
+                onChange={(e) => {
+                  const val = e.target.value as TemplateType | '';
+                  setTemplateType(val || null);
+                  setTemplateData({});
+                }}
+                disabled={isLoading}
+                className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+              >
+                <option value="">Freeform (no template)</option>
+                <option value="feature">Feature</option>
+                <option value="bug">Bug</option>
+                <option value="architecture">Architecture</option>
+                <option value="research">Research</option>
+                <option value="code">Code</option>
+              </select>
+            </div>
+
+            <TemplateForm
+              templateType={templateType}
+              value={templateData}
+              onChange={setTemplateData}
+              disabled={isLoading}
+            />
 
             <div className="border-t pt-4">
               <h3 className="text-sm font-medium text-foreground mb-3">

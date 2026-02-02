@@ -1,43 +1,34 @@
 import { Droppable, Draggable } from '@hello-pangea/dnd';
-import { Task, TaskStatus } from '../types/task';
+import type { Task, TaskStatus } from '../types/task';
+import type { V2Task, V2Status } from '../types/v2';
 import { TaskCard } from './TaskCard';
 import { cn } from '../lib/utils';
 
+type AnyTask = Task | V2Task;
+type AnyStatus = TaskStatus | V2Status;
+
 interface KanbanColumnProps {
-  status: TaskStatus;
-  tasks: Task[];
+  status: AnyStatus;
+  tasks: AnyTask[];
   totalTasks: number;
-  onTaskClick: (task: Task) => void;
+  onTaskClick: (task: AnyTask) => void;
   onTaskDelete?: (taskId: string) => void;
 }
 
-// Column display configuration
-const COLUMN_CONFIG: Record<TaskStatus, { title: string; color: string; bgColor: string }> = {
-  backlog: { 
-    title: 'Backlog', 
-    color: 'text-slate-400',
-    bgColor: 'bg-slate-500/10'
-  },
-  pending: { 
-    title: 'To Do', 
-    color: 'text-blue-400',
-    bgColor: 'bg-blue-500/10'
-  },
-  in_progress: { 
-    title: 'In Progress', 
-    color: 'text-amber-400',
-    bgColor: 'bg-amber-500/10'
-  },
-  blocked: { 
-    title: 'Blocked', 
-    color: 'text-red-400',
-    bgColor: 'bg-red-500/10'
-  },
-  completed: { 
-    title: 'Done', 
-    color: 'text-green-400',
-    bgColor: 'bg-green-500/10'
-  },
+// Column display configuration — supports both v1 and v2 statuses
+const COLUMN_CONFIG: Record<string, { title: string; color: string; bgColor: string }> = {
+  // v1
+  backlog: { title: 'Backlog', color: 'text-slate-400', bgColor: 'bg-slate-500/10' },
+  pending: { title: 'To Do', color: 'text-blue-400', bgColor: 'bg-blue-500/10' },
+  blocked: { title: 'Blocked', color: 'text-red-400', bgColor: 'bg-red-500/10' },
+  completed: { title: 'Done', color: 'text-green-400', bgColor: 'bg-green-500/10' },
+  // v2
+  queued: { title: 'Queued', color: 'text-slate-400', bgColor: 'bg-slate-500/10' },
+  claimed: { title: 'Claimed', color: 'text-blue-400', bgColor: 'bg-blue-500/10' },
+  in_progress: { title: 'In Progress', color: 'text-amber-400', bgColor: 'bg-amber-500/10' },
+  review: { title: 'Review', color: 'text-purple-400', bgColor: 'bg-purple-500/10' },
+  done: { title: 'Done', color: 'text-green-400', bgColor: 'bg-green-500/10' },
+  archived: { title: 'Archived', color: 'text-gray-400', bgColor: 'bg-gray-500/10' },
 };
 
 export function KanbanColumn({
@@ -49,7 +40,7 @@ export function KanbanColumn({
 }: KanbanColumnProps) {
   const count = tasks.length;
   const percentage = totalTasks > 0 ? Math.round((count / totalTasks) * 100) : 0;
-  const config = COLUMN_CONFIG[status];
+  const config = COLUMN_CONFIG[status] || { title: status, color: 'text-gray-400', bgColor: 'bg-gray-500/10' };
   
   // Calculate total story points (using priority as proxy, or could use a dedicated field)
   const points = tasks.reduce((sum, t) => sum + (t.priority || 0), 0);

@@ -1,11 +1,15 @@
-import { Task } from '../types/task';
-import { Lock, AlertCircle, Edit2, Trash2 } from 'lucide-react';
+import type { Task } from '../types/task';
+import type { V2Task } from '../types/v2';
+import { Lock, AlertCircle, Edit2, Trash2, Bot, User } from 'lucide-react';
+
+type AnyTask = Task | V2Task;
 
 interface TaskCardProps {
-  task: Task;
+  task: AnyTask;
   onClick: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  workspaceColor?: string;
 }
 
 // Format relative time (e.g., "2m ago")
@@ -70,7 +74,11 @@ function getStatusBadgeColor(status: string): string {
   }
 }
 
-export function TaskCard({ task, onClick, onEdit, onDelete }: TaskCardProps) {
+function isV2Task(task: AnyTask): task is V2Task {
+  return 'assigned_to' in task;
+}
+
+export function TaskCard({ task, onClick, onEdit, onDelete, workspaceColor }: TaskCardProps) {
   const hasBlockers = task.blocked_by.length > 0;
   const blocksOthers = task.blocks.length > 0;
   const isPending = task.status === 'pending';
@@ -86,6 +94,14 @@ export function TaskCard({ task, onClick, onEdit, onDelete }: TaskCardProps) {
     >
       {/* Priority pip - left border accent */}
       <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-md ${priorityPipColor}`} />
+
+      {/* Workspace color badge */}
+      {workspaceColor && (
+        <div
+          className="absolute top-2 right-2 w-2 h-2 rounded-full"
+          style={{ backgroundColor: workspaceColor }}
+        />
+      )}
 
       <div className="flex items-start justify-between mb-2 gap-2">
         <h4 className="font-medium text-sm line-clamp-2 flex-1">
@@ -149,6 +165,18 @@ export function TaskCard({ task, onClick, onEdit, onDelete }: TaskCardProps) {
               Delete
             </button>
           )}
+        </div>
+      )}
+
+      {/* Assigned-to indicator (v2 tasks) */}
+      {isV2Task(task) && task.assigned_to !== 'unassigned' && (
+        <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+          {task.assigned_to === 'ai' ? (
+            <Bot className="w-3 h-3" />
+          ) : (
+            <User className="w-3 h-3" />
+          )}
+          <span>{task.assigned_to === 'ai' ? 'AI' : 'AL'}</span>
         </div>
       )}
 

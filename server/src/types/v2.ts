@@ -107,6 +107,8 @@ export interface BriefingContent {
 
 export interface BriefingWorkspace {
   slug: string;
+  name: string;
+  color: string;
   completed: Array<{ task_id: string; subject: string; summary: string }>;
   needs_review: Array<{ task_id: string; subject: string; review_notes: string }>;
   in_progress: Array<{ task_id: string; subject: string; last_activity: string }>;

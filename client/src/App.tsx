@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { WorkspaceSwitcher } from './components/WorkspaceSwitcher';
 import { WorkspaceBoard } from './components/WorkspaceBoard';
-import { DashboardPlaceholder } from './components/DashboardPlaceholder';
-import { BriefingPlaceholder } from './components/BriefingPlaceholder';
+import { DashboardView } from './components/DashboardView';
+import { BriefingView } from './components/BriefingView';
 import { useWorkspaces } from './hooks/useWorkspaces';
 
 function AppLayout() {
@@ -21,10 +21,11 @@ function AppLayout() {
       <WorkspaceSwitcher workspaces={workspaces} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Routes>
-          <Route path="/" element={<DashboardPlaceholder />} />
+          <Route path="/" element={<DashboardView />} />
           <Route path="/w/:slug" element={<WorkspaceBoard workspaces={workspaces} />} />
           <Route path="/w/:slug/task/:id" element={<WorkspaceBoard workspaces={workspaces} />} />
-          <Route path="/briefing" element={<BriefingPlaceholder />} />
+          <Route path="/briefing" element={<BriefingView />} />
+          <Route path="/briefing/:date" element={<BriefingView />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
